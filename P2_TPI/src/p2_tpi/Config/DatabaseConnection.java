@@ -10,21 +10,11 @@ public class DatabaseConnection {
     private static final String USER = "tfi_user";
     private static final String PASSWORD = "tfi_pass_123";
 
-    /* 
-    public static Connection getConnection() throws SQLException {
-        String url = System.getProperty("db.url", DEF_URL);
-        String user = System.getProperty("db.user", DEF_USER);
-        String pass = System.getProperty("db.password", DEF_PASS);
-        return DriverManager.getConnection(url, user, pass);
-    }
-    */
-    
+
     static {
         try {
-            // Carga explícita del driver (requerido en algunas versiones de Java)
             Class.forName("com.mysql.cj.jdbc.Driver");
 
-            // Valida configuración tempranamente (fail-fast)
             validateConfiguration();
         } catch (ClassNotFoundException e) {
             throw new ExceptionInInitializerError("Error: No se encontró el driver JDBC de MySQL: " + e.getMessage());

@@ -11,12 +11,10 @@ import p2_tpi.Service.VehiculoImpl;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Scanner;
-
 public class MenuHandler {
 
     private final Scanner sc = new Scanner(System.in);
 
-    // Services estilo modelo (clases *Impl directamente)
     private final VehiculoImpl vehiculoService = new VehiculoImpl();
     private final TipoCoberturaImpl coberturaService = new TipoCoberturaImpl();
     private final SeguroVehicularImpl seguroService = new SeguroVehicularImpl();
@@ -35,15 +33,14 @@ public class MenuHandler {
                     case 0 ->
                         System.out.println("Saliendo...");
                     default ->
-                        System.out.println("Opci√≥n inv√°lida.");
+                        System.out.println("OpciÛn inv·lida.");
                 }
             } catch (Exception e) {
-                System.out.println("‚ùå ERROR: " + e.getMessage());
+                System.out.println("? ERROR: " + e.getMessage());
             }
         } while (op != 0);
     }
 
-    // ======= Submen√∫ Veh√≠culos =======
     private void vehiculoLoop() {
         int op;
         do {
@@ -62,31 +59,31 @@ public class MenuHandler {
                     case 0 -> {
                         /* volver */ }
                     default ->
-                        System.out.println("Opci√≥n inv√°lida.");
+                        System.out.println("OpciÛn inv·lida.");
                 }
             } catch (Exception e) {
-                System.out.println("‚ùå ERROR: " + e.getMessage());
+                System.out.println("? ERROR: " + e.getMessage());
             }
         } while (op != 0);
     }
 
     private void crearVehiculoConSeguro() {
-        System.out.println("\n--- NUEVO VEH√çCULO ---");
+        System.out.println("\n--- NUEVO VEHÕCULO ---");
         System.out.print("Dominio: ");
         String dominio = sc.nextLine().trim();
         System.out.print("Marca: ");
         String marca = sc.nextLine().trim();
         System.out.print("Modelo: ");
         String modelo = sc.nextLine().trim();
-        System.out.print("A√±o (enter si no aplica): ");
+        System.out.print("AÒo (enter si no aplica): ");
         Integer anio = readNullableInt();
-        System.out.print("N¬∞ chasis (enter si no aplica): ");
+        System.out.print("N∞ chasis (enter si no aplica): ");
         String chasis = emptyToNull(sc.nextLine().trim());
 
         System.out.println("\n--- SEGURO VEHICULAR ---");
         System.out.print("Aseguradora: ");
         String aseg = sc.nextLine().trim();
-        System.out.print("N¬∞ p√≥liza (√∫nica): ");
+        System.out.print("N∞ pÛliza (˙nica): ");
         String poliza = sc.nextLine().trim();
         listarCoberturas(); // para que vea IDs
         System.out.print("ID de cobertura: ");
@@ -112,7 +109,7 @@ public class MenuHandler {
         v.setSeguro(s);
 
         Long id = vehiculoService.crearVehiculoConSeguro(v);
-        System.out.println("‚úÖ Veh√≠culo creado con id: " + id);
+        System.out.println("? VehÌculo creado con id: " + id);
     }
 
     private void buscarVehiculoPorDominio() {
@@ -121,9 +118,9 @@ public class MenuHandler {
         Vehiculo v = vehiculoService.buscarPorDominio(dominio);
         System.out.println("\n--- Resultado ---");
         System.out.println("ID: " + v.getId());
-        System.out.println("Veh√≠culo: " + v.getMarca() + " " + v.getModelo() + " (" + v.getDominio() + ")");
+        System.out.println("VehÌculo: " + v.getMarca() + " " + v.getModelo() + " (" + v.getDominio() + ")");
         System.out.println("Chasis: " + (v.getNroChasis() == null ? "-" : v.getNroChasis()));
-        System.out.println("P√≥liza: " + v.getSeguro().getNroPoliza());
+        System.out.println("PÛliza: " + v.getSeguro().getNroPoliza());
         System.out.println("Aseguradora: " + v.getSeguro().getAseguradora());
         System.out.println("Cobertura: " + v.getSeguro().getTipoCobertura().getCodigo() + " - " + v.getSeguro().getTipoCobertura().getNombre());
         System.out.println("Vencimiento: " + v.getSeguro().getVencimiento());
@@ -131,26 +128,25 @@ public class MenuHandler {
 
     private void listarVehiculos() {
         List<Vehiculo> lista = vehiculoService.listar();
-        System.out.println("\n--- LISTADO DE VEH√çCULOS ---");
+        System.out.println("\n--- LISTADO DE VEHÕCULOS ---");
         if (lista.isEmpty()) {
             System.out.println("(sin registros)");
             return;
         }
         for (Vehiculo v : lista) {
             System.out.println(v.getId() + ") " + v.getDominio() + " - " + v.getMarca() + " " + v.getModelo()
-                    + " | P√≥liza " + v.getSeguro().getNroPoliza()
+                    + " | PÛliza " + v.getSeguro().getNroPoliza()
                     + " (" + v.getSeguro().getTipoCobertura().getCodigo() + ")");
         }
     }
 
     private void eliminarVehiculoYSeguro() {
-        System.out.print("\nID de veh√≠culo a eliminar (soft): ");
+        System.out.print("\nID de vehÌculo a eliminar (soft): ");
         Long id = readLong();
         vehiculoService.eliminar(id);
-        System.out.println("‚úÖ Eliminado con √©xito (veh√≠culo + seguro).");
+        System.out.println("? Eliminado con Èxito (vehÌculo + seguro).");
     }
 
-    // ======= Submen√∫ Coberturas =======
     private void coberturaLoop() {
         int op;
         do {
@@ -168,13 +164,11 @@ public class MenuHandler {
                         eliminarCobertura();
                     case 5 ->
                         buscarCoberturaPorCodigo();
-                    case 0 -> {
-                        /* volver */ }
                     default ->
-                        System.out.println("Opci√≥n inv√°lida.");
+                        System.out.println("OpciÛn inv·lida.");
                 }
             } catch (Exception e) {
-                System.out.println("‚ùå ERROR: " + e.getMessage());
+                System.out.println("? ERROR: " + e.getMessage());
             }
         } while (op != 0);
     }
@@ -193,11 +187,11 @@ public class MenuHandler {
 
     private void crearCobertura() {
         System.out.println("\n--- NUEVA COBERTURA ---");
-        System.out.print("C√≥digo (√∫nico): ");
+        System.out.print("CÛdigo (˙nico): ");
         String codigo = sc.nextLine().trim();
         System.out.print("Nombre: ");
         String nombre = sc.nextLine().trim();
-        System.out.print("Descripci√≥n (enter si no aplica): ");
+        System.out.print("DescripciÛn (enter si no aplica): ");
         String desc = emptyToNull(sc.nextLine());
 
         TipoCobertura t = new TipoCobertura();
@@ -207,18 +201,18 @@ public class MenuHandler {
         t.setOrden(1);
 
         Long id = coberturaService.crear(t);
-        System.out.println("‚úÖ Cobertura creada con id: " + id);
+        System.out.println("? Cobertura creada con id: " + id);
     }
 
     private void actualizarCobertura() {
         listarCoberturas();
         System.out.print("\nID de cobertura a actualizar: ");
         Long id = readLong();
-        System.out.print("Nuevo c√≥digo: ");
+        System.out.print("Nuevo cÛdigo: ");
         String codigo = sc.nextLine().trim();
         System.out.print("Nuevo nombre: ");
         String nombre = sc.nextLine().trim();
-        System.out.print("Nueva descripci√≥n (enter si no aplica): ");
+        System.out.print("Nueva descripciÛn (enter si no aplica): ");
         String desc = emptyToNull(sc.nextLine());
 
         TipoCobertura t = new TipoCobertura();
@@ -227,7 +221,7 @@ public class MenuHandler {
         t.setNombre(nombre);
 
         int rows = coberturaService.actualizar(t);
-        System.out.println(rows > 0 ? "‚úÖ Actualizada." : "‚ö† No se actualiz√≥.");
+        System.out.println(rows > 0 ? "? Actualizada." : "? No se actualizÛ.");
     }
 
     private void eliminarCobertura() {
@@ -235,17 +229,16 @@ public class MenuHandler {
         System.out.print("\nID de cobertura a eliminar (soft): ");
         Long id = readLong();
         int rows = coberturaService.eliminar(id);
-        System.out.println(rows > 0 ? "‚úÖ Eliminada." : "‚ö† No se elimin√≥.");
+        System.out.println(rows > 0 ? "? Eliminada." : "? No se eliminÛ.");
     }
 
     private void buscarCoberturaPorCodigo() {
-        System.out.print("\nC√≥digo: ");
+        System.out.print("\nCÛdigo: ");
         String codigo = sc.nextLine().trim();
         TipoCobertura t = coberturaService.buscarPorCodigo(codigo);
         System.out.println("ID: " + t.getId() + " | " + t.getCodigo() + " - " + t.getNombre());
     }
 
-    // ======= Helpers de entrada =======
     private int readInt() {
         try {
             String s = sc.nextLine().trim();
@@ -261,7 +254,7 @@ public class MenuHandler {
                 String s = sc.nextLine().trim();
                 return Long.parseLong(s);
             } catch (Exception e) {
-                System.out.print("N√∫mero inv√°lido, reintente: ");
+                System.out.print("N˙mero inv·lido, reintente: ");
             }
         }
     }
@@ -274,7 +267,7 @@ public class MenuHandler {
         try {
             return Integer.parseInt(s);
         } catch (Exception e) {
-            System.out.print("N√∫mero inv√°lido, deje vac√≠o o reintente (entero): ");
+            System.out.print("N˙mero inv·lido, deje vacÌo o reintente (entero): ");
             return readNullableInt();
         }
     }
