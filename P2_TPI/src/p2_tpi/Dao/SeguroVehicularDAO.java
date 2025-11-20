@@ -1,71 +1,77 @@
 package p2_tpi.Dao;
 
-
 import p2_tpi.Config.DatabaseConnection;
-import p2_tpi.Models.SeguroVehicular;
 import p2_tpi.Models.TipoCobertura;
 
 import java.sql.*;
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SeguroVehicularDAO {
+public class TipoCoberturaDAO {
 
     // ============================================================
     // INSERT
     // ============================================================
-    public Long insert(SeguroVehicular s) {
+    public Long insert(TipoCobertura tc) {
         try (Connection con = DatabaseConnection.getConnection()) {
-            return insertTx(s, con);
+            return insertTx(tc, con);
         } catch (SQLException e) {
-            throw new RuntimeException("Error insertando SeguroVehicular: " + e.getMessage(), e);
+            throw new RuntimeException("Error insertando TipoCobertura: " + e.getMessage(), e);
         }
     }
 
-    public Long insertTx(SeguroVehicular s, Connection con) {
-        String sql = "INSERT INTO SeguroVehicular (aseguradora, nro_poliza, tipo_cobertura, vencimiento, eliminado) " +
-                     "VALUES (?,?,?,?,0)";
+    public Long insertTx(TipoCobertura tc, Connection con) {
+        String sql = "INSERT INTO TipoCobertura (codigo, nombre, eliminado, orden) VALUES (?,?,0,?)";
         try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, s.getAseguradora());
-            ps.setString(2, s.getNroPoliza());
-            ps.setLong(3, s.getTipoCobertura().getId());
-            ps.setDate(4, Date.valueOf(s.getVencimiento()));
-
+            ps.setString(1, tc.getCodigo());
+            ps.setString(2, tc.getNombre());
+            if (tc.getOrden() != null) {
+                ps.setInt(3, tc.getOrden());
+            } else {
+                ps.setNull(3, Types.INTEGER);
+            }
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
                     long id = rs.getLong(1);
-                    s.setId(id);
-                    s.setEliminado(false);
+                    tc.setId(id);
+                    tc.setEliminado(false);
                     return id;
                 }
             }
             return null;
         } catch (SQLException e) {
-            throw new RuntimeException("Error insertando SeguroVehicular (Tx): " + e.getMessage(), e);
+            throw new RuntimeException("Error insertando TipoCobertura (Tx): " + e.getMessage(), e);
         }
     }
 
     // ============================================================
     // UPDATE
     // ============================================================
-    public int update(SeguroVehicular s) {
-        String sql = "UPDATE SeguroVehicular " +
-                     "SET aseguradora=?, nro_poliza=?, tipo_cobertura=?, vencimiento=? " +
-                     "WHERE id=? AND eliminado=0";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
+    public int update(TipoCobertura tc) {
+        try (Connection con = DatabaseConnection.getConnection()) {
+            return updateTx(tc, con);
+        } catch (SQLException e) {
+            throw new RuntimeException("Error actualizando TipoCobertura: " + e.getMessage(), e);
+        }
+    }
 
-            ps.setString(1, s.getAseguradora());
-            ps.setString(2, s.getNroPoliza());
-            ps.setLong(3, s.getTipoCobertura().getId());
-            ps.setDate(4, Date.valueOf(s.getVencimiento()));
-            ps.setLong(5, s.getId());
+    public int updateTx(TipoCobertura tc, Connection con) {
+        String sql = "UPDATE TipoCobertura SET codigo=?, nombre=?, orden=? WHERE id=? AND eliminado=0";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, tc.getCodigo());
+            ps.setString(2, tc.getNombre());
+            if (tc.getOrden() != null) {
+                ps.setInt(3, tc.getOrden());
+            } else {
+                ps.setNull(3, Types.INTEGER);
+            }
+            ps.setLong(4, tc.getId());
 
             return ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Error actualizando SeguroVehicular: " + e.getMessage(), e);
+            throw new RuntimeException("Error actualizando TipoCobertura (Tx): " + e.getMessage(), e);
         }
     }
 
@@ -76,31 +82,25 @@ public class SeguroVehicularDAO {
         try (Connection con = DatabaseConnection.getConnection()) {
             return softDeleteTx(id, con);
         } catch (SQLException e) {
-            throw new RuntimeException("Error eliminando SeguroVehicular: " + e.getMessage(), e);
+            throw new RuntimeException("Error eliminando TipoCobertura: " + e.getMessage(), e);
         }
     }
 
     public int softDeleteTx(Long id, Connection con) {
-        String sql = "UPDATE SeguroVehicular SET eliminado=1 WHERE id=?";
+        String sql = "UPDATE TipoCobertura SET eliminado=1 WHERE id=?";
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setLong(1, id);
             return ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Error eliminando SeguroVehicular (Tx): " + e.getMessage(), e);
+            throw new RuntimeException("Error eliminando TipoCobertura (Tx): " + e.getMessage(), e);
         }
     }
 
     // ============================================================
     // FINDERS
     // ============================================================
-    public SeguroVehicular findById(Long id) {
-        String sql = """
-            SELECT s.id, s.aseguradora, s.nro_poliza, s.vencimiento, s.eliminado,
-                   tc.id as tc_id, tc.codigo, tc.nombre, tc.eliminado as tc_eliminado, tc.orden
-            FROM SeguroVehicular s
-            JOIN TipoCobertura tc ON tc.id = s.tipo_cobertura
-            WHERE s.id = ?;
-            """;
+    public TipoCobertura findById(Long id) {
+        String sql = "SELECT id, codigo, nombre, eliminado, orden FROM TipoCobertura WHERE id=?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
@@ -112,58 +112,69 @@ public class SeguroVehicularDAO {
                 return null;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error buscando SeguroVehicular por id: " + e.getMessage(), e);
+            throw new RuntimeException("Error buscando TipoCobertura por id: " + e.getMessage(), e);
         }
     }
 
-    public boolean existsByNroPoliza(String nroPoliza) {
-        String sql = "SELECT 1 FROM SeguroVehicular WHERE nro_poliza=? AND eliminado=0";
+    public TipoCobertura findByCodigo(String codigo) {
+        String sql = "SELECT id, codigo, nombre, eliminado, orden FROM TipoCobertura WHERE codigo=?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, nroPoliza);
+            ps.setString(1, codigo);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return map(rs);
+                }
+                return null;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error buscando TipoCobertura por código: " + e.getMessage(), e);
+        }
+    }
+
+    public boolean existsByCodigo(String codigo) {
+        String sql = "SELECT 1 FROM TipoCobertura WHERE codigo=? AND eliminado=0";
+        try (Connection con = DatabaseConnection.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+
+            ps.setString(1, codigo);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error verificando número de póliza: " + e.getMessage(), e);
+            throw new RuntimeException("Error verificando código de TipoCobertura: " + e.getMessage(), e);
         }
     }
 
     // ============================================================
-    // NUEVO: VALIDACIÓN EXCLUYENDO ID (para UPDATE)
+    // VALIDACIÓN EXCLUYENDO ID (para update)
     // ============================================================
-    public boolean existsByNroPolizaExcludingId(String nroPoliza, Long id) {
+    public boolean existsByCodigoExcludingId(String codigo, Long id) {
+        // Si no hay id (alta), reutilizamos el existsByCodigo normal
         if (id == null) {
-            return existsByNroPoliza(nroPoliza);
+            return existsByCodigo(codigo);
         }
 
-        String sql = "SELECT 1 FROM SeguroVehicular WHERE nro_poliza=? AND eliminado=0 AND id<>?";
+        String sql = "SELECT 1 FROM TipoCobertura WHERE codigo=? AND eliminado=0 AND id<>?";
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
-            ps.setString(1, nroPoliza);
+            ps.setString(1, codigo);
             ps.setLong(2, id);
 
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error verificando póliza excluyendo id: " + e.getMessage(), e);
+            throw new RuntimeException("Error verificando código de TipoCobertura excluyendo id: " + e.getMessage(), e);
         }
     }
 
-    public List<SeguroVehicular> findAllActivos() {
-        String sql = """
-            SELECT s.id, s.aseguradora, s.nro_poliza, s.vencimiento, s.eliminado,
-                   tc.id as tc_id, tc.codigo, tc.nombre, tc.eliminado as tc_eliminado, tc.orden
-            FROM SeguroVehicular s
-            JOIN TipoCobertura tc ON tc.id = s.tipo_cobertura
-            WHERE s.eliminado=0
-            ORDER BY s.aseguradora, s.nro_poliza;
-            """;
-
-        List<SeguroVehicular> list = new ArrayList<>();
+    public List<TipoCobertura> findAllActivas() {
+        String sql = "SELECT id, codigo, nombre, eliminado, orden " +
+                     "FROM TipoCobertura WHERE eliminado=0 ORDER BY orden, nombre";
+        List<TipoCobertura> list = new ArrayList<>();
         try (Connection con = DatabaseConnection.getConnection();
              PreparedStatement ps = con.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
@@ -173,31 +184,26 @@ public class SeguroVehicularDAO {
             }
             return list;
         } catch (SQLException e) {
-            throw new RuntimeException("Error listando Seguros Vehiculares: " + e.getMessage(), e);
+            throw new RuntimeException("Error listando Tipos de Cobertura: " + e.getMessage(), e);
         }
+    }
+
+    // Método que matchea lo que usa el Service
+    public List<TipoCobertura> findAll() {
+        return findAllActivas();
     }
 
     // ============================================================
     // MAPEO
     // ============================================================
-    private SeguroVehicular map(ResultSet rs) throws SQLException {
+    private TipoCobertura map(ResultSet rs) throws SQLException {
         TipoCobertura tc = new TipoCobertura();
-        tc.setId(rs.getLong("tc_id"));
+        tc.setId(rs.getLong("id"));
         tc.setCodigo(rs.getString("codigo"));
         tc.setNombre(rs.getString("nombre"));
-        tc.setEliminado(rs.getBoolean("tc_eliminado"));
+        tc.setEliminado(rs.getBoolean("eliminado"));
         Object ordenObj = rs.getObject("orden");
         tc.setOrden(ordenObj != null ? rs.getInt("orden") : null);
-
-        SeguroVehicular s = new SeguroVehicular();
-        s.setId(rs.getLong("id"));
-        s.setAseguradora(rs.getString("aseguradora"));
-        s.setNroPoliza(rs.getString("nro_poliza"));
-        Date vto = rs.getDate("vencimiento");
-        s.setVencimiento(vto != null ? vto.toLocalDate() : null);
-        s.setEliminado(rs.getBoolean("eliminado"));
-        s.setTipoCobertura(tc);
-
-        return s;
+        return tc;
     }
 }
