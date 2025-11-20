@@ -1,7 +1,6 @@
 // prog2int/Service/VehiculoServiceImpl.java
 package prog2int.Service;
 
-import prog2int.Config.DatabaseConnection;
 import prog2int.Config.TransactionManager;
 import prog2int.Dao.SeguroVehicularDAO;
 import prog2int.Dao.VehiculoDAO;
@@ -38,7 +37,8 @@ public class VehiculoImpl {
             throw new RuntimeException("La póliza ya existe: " + s.getNroPoliza());
         }
 
-        try (Connection con = DatabaseConnection.getConnection(); TransactionManager tx = new TransactionManager()) {
+        try (TransactionManager tx = new TransactionManager()) {
+            Connection con = tx.getConnection();
 
             Long idSeguro = seguroDAO.insertTx(s, con);
             s.setId(idSeguro);
@@ -74,9 +74,10 @@ public class VehiculoImpl {
         }
 
         try (TransactionManager tx = new TransactionManager()) {
+            Connection con = tx.getConnection();
 
-            vehiculoDAO.softDelete(idVehiculo);
-            seguroDAO.softDelete(v.getSeguro().getId());
+            vehiculoDAO.softDeleteTx(idVehiculo, con);
+            seguroDAO.softDeleteTx(v.getSeguro().getId(), con);
             tx.commit();
             return 1;
 

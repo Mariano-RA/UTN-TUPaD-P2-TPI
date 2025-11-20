@@ -84,6 +84,27 @@ public class VehiculoDAO {
         }
     }
 
+    public int updateTx(Vehiculo v, Connection con) {
+        String sql = "UPDATE Vehiculo SET dominio=?, marca=?, modelo=?, anio=?, nro_chasis=?, seguro_id=? "
+                + "WHERE id=? AND eliminado=0";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, v.getDominio());
+            ps.setString(2, v.getMarca());
+            ps.setString(3, v.getModelo());
+            if (v.getAnio() != null) {
+                ps.setInt(4, v.getAnio());
+            } else {
+                ps.setNull(4, Types.INTEGER);
+            }
+            ps.setString(5, v.getNroChasis());
+            ps.setLong(6, v.getSeguro().getId());
+            ps.setLong(7, v.getId());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error actualizando Vehículo (Tx): " + e.getMessage(), e);
+        }
+    }
+
     public int softDelete(Long id) {
         String sql = "UPDATE Vehiculo SET eliminado=1 WHERE id=?";
         try (Connection con = DatabaseConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -91,6 +112,16 @@ public class VehiculoDAO {
             return ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error eliminando Vehículo: " + e.getMessage(), e);
+        }
+    }
+
+    public int softDeleteTx(Long id, Connection con) {
+        String sql = "UPDATE Vehiculo SET eliminado=1 WHERE id=?";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error eliminando Vehículo (Tx): " + e.getMessage(), e);
         }
     }
 
