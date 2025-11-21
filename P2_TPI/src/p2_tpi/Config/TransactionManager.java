@@ -8,7 +8,7 @@ public class TransactionManager implements AutoCloseable {
     private final Connection conn;
     private boolean completed = false;
 
-    public TransactionManager() throws SQLException {           // 👈 constructor sin parámetros
+    public TransactionManager() throws SQLException {
         this.conn = DatabaseConnection.getConnection();
         this.conn.setAutoCommit(false);
     }

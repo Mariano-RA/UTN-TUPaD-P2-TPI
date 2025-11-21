@@ -1,7 +1,7 @@
 USE vehiculo_seguro;
 
 -- Parámetros
-SET @N := 250000;    
+SET @N := 25;    
 SET @OFFSET := 0;     
 DROP TEMPORARY TABLE IF EXISTS seq;
 CREATE TEMPORARY TABLE seq (n INT PRIMARY KEY) ENGINE=Memory;
