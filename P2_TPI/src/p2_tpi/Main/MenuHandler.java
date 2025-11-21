@@ -78,15 +78,15 @@ public class MenuHandler {
         String marca = sc.nextLine().trim();
         System.out.print("Modelo: ");
         String modelo = sc.nextLine().trim();
-        System.out.print("Aï¿½o (enter si no aplica): ");
+        System.out.print("Año (enter si no aplica): ");
         Integer anio = readNullableInt();
-        System.out.print("Nï¿½ chasis (enter si no aplica): ");
+        System.out.print("Numero chasis (enter si no aplica): ");
         String chasis = emptyToNull(sc.nextLine().trim());
 
         System.out.println("\n--- SEGURO VEHICULAR ---");
         System.out.print("Aseguradora: ");
         String aseg = sc.nextLine().trim();
-        System.out.print("Nï¿½ pï¿½liza (ï¿½nica): ");
+        System.out.print("Numero Poliza: ");
         String poliza = sc.nextLine().trim();
         listarCoberturas(); // para que vea IDs
         System.out.print("ID de cobertura: ");
