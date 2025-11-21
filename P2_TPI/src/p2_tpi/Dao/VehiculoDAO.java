@@ -11,22 +11,35 @@ import java.util.List;
 
 public class VehiculoDAO {
 
-    // ==========================
-    // INSERT
-    // ==========================
-
     public Long insert(Vehiculo v) {
-        try (Connection con = DatabaseConnection.getConnection()) {
-            return insertTx(v, con);
+        String sql = "INSERT INTO Vehiculo (dominio, marca, modelo, anio, nro_chasis, seguro_id, eliminado) "
+                + "VALUES (?,?,?,?,?,?,0)";
+        try (Connection con = DatabaseConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, v.getDominio());
+            ps.setString(2, v.getMarca());
+            ps.setString(3, v.getModelo());
+            if (v.getAnio() != null) {
+                ps.setInt(4, v.getAnio());
+            } else {
+                ps.setNull(4, Types.INTEGER);
+            }
+            ps.setString(5, v.getNroChasis());
+            ps.setLong(6, v.getSeguro().getId());
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) {
+                    return rs.getLong(1);
+                }
+            }
+            return null;
         } catch (SQLException e) {
-            throw new RuntimeException("Error insertando VehÃ­culo: " + e.getMessage(), e);
+            throw new RuntimeException("Error insertando Vehículo: " + e.getMessage(), e);
         }
     }
 
     public Long insertTx(Vehiculo v, Connection con) {
-        String sql = "INSERT INTO Vehiculo " +
-                "(dominio, marca, modelo, anio, nro_chasis, seguro_id, eliminado) " +
-                "VALUES (?,?,?,?,?,?,0)";
+        String sql = "INSERT INTO Vehiculo (dominio, marca, modelo, anio, nro_chasis, seguro_id, eliminado) "
+                + "VALUES (?,?,?,?,?,?,0)";
         try (PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, v.getDominio());
             ps.setString(2, v.getMarca());
@@ -38,32 +51,22 @@ public class VehiculoDAO {
             }
             ps.setString(5, v.getNroChasis());
             ps.setLong(6, v.getSeguro().getId());
-
             ps.executeUpdate();
             try (ResultSet rs = ps.getGeneratedKeys()) {
                 if (rs.next()) {
-                    long id = rs.getLong(1);
-                    v.setId(id);
-                    v.setEliminado(false);
-                    return id;
+                    return rs.getLong(1);
                 }
             }
             return null;
         } catch (SQLException e) {
-            throw new RuntimeException("Error insertando VehÃ­culo (Tx): " + e.getMessage(), e);
+            throw new RuntimeException("Error insertando Vehículo (Tx): " + e.getMessage(), e);
         }
     }
 
-    // ==========================
-    // UPDATE
-    // ==========================
-
     public int update(Vehiculo v) {
-        String sql = "UPDATE Vehiculo SET dominio=?, marca=?, modelo=?, anio=?, nro_chasis=?, seguro_id=? " +
-                "WHERE id=? AND eliminado=0";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
+        String sql = "UPDATE Vehiculo SET dominio=?, marca=?, modelo=?, anio=?, nro_chasis=?, seguro_id=? "
+                + "WHERE id=? AND eliminado=0";
+        try (Connection con = DatabaseConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, v.getDominio());
             ps.setString(2, v.getMarca());
             ps.setString(3, v.getModelo());
@@ -75,22 +78,40 @@ public class VehiculoDAO {
             ps.setString(5, v.getNroChasis());
             ps.setLong(6, v.getSeguro().getId());
             ps.setLong(7, v.getId());
-
             return ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Error actualizando VehÃ­culo: " + e.getMessage(), e);
+            throw new RuntimeException("Error actualizando Vehículo: " + e.getMessage(), e);
         }
     }
 
-    // ==========================
-    // SOFT DELETE
-    // ==========================
+    public int updateTx(Vehiculo v, Connection con) {
+        String sql = "UPDATE Vehiculo SET dominio=?, marca=?, modelo=?, anio=?, nro_chasis=?, seguro_id=? "
+                + "WHERE id=? AND eliminado=0";
+        try (PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, v.getDominio());
+            ps.setString(2, v.getMarca());
+            ps.setString(3, v.getModelo());
+            if (v.getAnio() != null) {
+                ps.setInt(4, v.getAnio());
+            } else {
+                ps.setNull(4, Types.INTEGER);
+            }
+            ps.setString(5, v.getNroChasis());
+            ps.setLong(6, v.getSeguro().getId());
+            ps.setLong(7, v.getId());
+            return ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error actualizando Vehículo (Tx): " + e.getMessage(), e);
+        }
+    }
 
     public int softDelete(Long id) {
-        try (Connection con = DatabaseConnection.getConnection()) {
-            return softDeleteTx(id, con);
+        String sql = "UPDATE Vehiculo SET eliminado=1 WHERE id=?";
+        try (Connection con = DatabaseConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            return ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Error eliminando VehÃ­culo: " + e.getMessage(), e);
+            throw new RuntimeException("Error eliminando Vehículo: " + e.getMessage(), e);
         }
     }
 
@@ -100,26 +121,21 @@ public class VehiculoDAO {
             ps.setLong(1, id);
             return ps.executeUpdate();
         } catch (SQLException e) {
-            throw new RuntimeException("Error eliminando VehÃ­culo (Tx): " + e.getMessage(), e);
+            throw new RuntimeException("Error eliminando Vehículo (Tx): " + e.getMessage(), e);
         }
     }
 
-    // ==========================
-    // FINDERS
-    // ==========================
-
     public Vehiculo findById(Long id) {
-        String sql =
-                "SELECT v.id, v.dominio, v.marca, v.modelo, v.anio, v.nro_chasis, v.seguro_id, v.eliminado, " +
-                "       s.id AS s_id, s.aseguradora, s.nro_poliza, s.vencimiento, s.eliminado AS s_eliminado, " +
-                "       tc.id AS tc_id, tc.codigo, tc.nombre, tc.eliminado AS tc_eliminado, tc.orden " +
-                "FROM Vehiculo v " +
-                "LEFT JOIN SeguroVehicular s ON v.seguro_id = s.id " +
-                "LEFT JOIN TipoCobertura tc ON s.tipo_cobertura_id = tc.id " +
-                "WHERE v.id=?";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
+        String sql = """
+            SELECT v.id, v.dominio, v.marca, v.modelo, v.anio, v.nro_chasis, v.eliminado,
+                   s.id as s_id, s.aseguradora, s.nro_poliza, s.vencimiento, s.eliminado as s_eliminado,
+                   tc.id as tc_id, tc.codigo, tc.nombre, tc.eliminado as tc_eliminado
+            FROM Vehiculo v
+            JOIN SeguroVehicular s ON s.id = v.seguro_id
+            JOIN TipoCobertura tc ON tc.id = s.tipo_cobertura
+            WHERE v.id=?;
+        """;
+        try (Connection con = DatabaseConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -128,22 +144,21 @@ public class VehiculoDAO {
                 return null;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error buscando VehÃ­culo por id: " + e.getMessage(), e);
+            throw new RuntimeException("Error buscando Vehículo por id: " + e.getMessage(), e);
         }
     }
 
     public Vehiculo findByDominio(String dominio) {
-        String sql =
-                "SELECT v.id, v.dominio, v.marca, v.modelo, v.anio, v.nro_chasis, v.seguro_id, v.eliminado, " +
-                "       s.id AS s_id, s.aseguradora, s.nro_poliza, s.vencimiento, s.eliminado AS s_eliminado, " +
-                "       tc.id AS tc_id, tc.codigo, tc.nombre, tc.eliminado AS tc_eliminado, tc.orden " +
-                "FROM Vehiculo v " +
-                "LEFT JOIN SeguroVehicular s ON v.seguro_id = s.id " +
-                "LEFT JOIN TipoCobertura tc ON s.tipo_cobertura_id = tc.id " +
-                "WHERE v.dominio = ?";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
+        String sql = """
+            SELECT v.id, v.dominio, v.marca, v.modelo, v.anio, v.nro_chasis, v.eliminado,
+                   s.id as s_id, s.aseguradora, s.nro_poliza, s.vencimiento, s.eliminado as s_eliminado,
+                   tc.id as tc_id, tc.codigo, tc.nombre, tc.eliminado as tc_eliminado
+            FROM Vehiculo v
+            JOIN SeguroVehicular s ON s.id = v.seguro_id
+            JOIN TipoCobertura tc ON tc.id = s.tipo_cobertura
+            WHERE v.dominio=?;
+        """;
+        try (Connection con = DatabaseConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, dominio);
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
@@ -152,67 +167,57 @@ public class VehiculoDAO {
                 return null;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error buscando VehÃ­culo por dominio: " + e.getMessage(), e);
+            throw new RuntimeException("Error buscando Vehículo por dominio: " + e.getMessage(), e);
         }
     }
 
     public boolean existsByDominio(String dominio) {
         String sql = "SELECT 1 FROM Vehiculo WHERE dominio=? AND eliminado=0";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
+        try (Connection con = DatabaseConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, dominio);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error verificando dominio de VehÃ­culo: " + e.getMessage(), e);
+            throw new RuntimeException("Error verificando dominio: " + e.getMessage(), e);
         }
     }
 
-    public boolean existsByDominioExcludingId(String dominio, Long id) {
+    public boolean existsByDominioExcludingId(String dominio, Long idExcluir) {
         String sql = "SELECT 1 FROM Vehiculo WHERE dominio=? AND eliminado=0 AND id<>?";
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql)) {
-
+        try (Connection con = DatabaseConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, dominio);
-            ps.setLong(2, id);
+            ps.setLong(2, idExcluir);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next();
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error verificando dominio (excluyendo id): " + e.getMessage(), e);
+            throw new RuntimeException("Error verificando dominio duplicado: " + e.getMessage(), e);
         }
     }
 
     public List<Vehiculo> findAll() {
-        String sql =
-                "SELECT v.id, v.dominio, v.marca, v.modelo, v.anio, v.nro_chasis, v.seguro_id, v.eliminado, " +
-                "       s.id AS s_id, s.aseguradora, s.nro_poliza, s.vencimiento, s.eliminado AS s_eliminado, " +
-                "       tc.id AS tc_id, tc.codigo, tc.nombre, tc.eliminado AS tc_eliminado, tc.orden " +
-                "FROM Vehiculo v " +
-                "LEFT JOIN SeguroVehicular s ON v.seguro_id = s.id " +
-                "LEFT JOIN TipoCobertura tc ON s.tipo_cobertura_id = tc.id " +
-                "WHERE v.eliminado = 0 " +
-                "ORDER BY v.dominio";
+        String sql = """
+            SELECT v.id, v.dominio, v.marca, v.modelo, v.anio, v.nro_chasis, v.eliminado,
+                   s.id as s_id, s.aseguradora, s.nro_poliza, s.vencimiento, s.eliminado as s_eliminado,
+                   tc.id as tc_id, tc.codigo, tc.nombre, tc.eliminado as tc_eliminado
+            FROM Vehiculo v
+            JOIN SeguroVehicular s ON s.id = v.seguro_id
+            JOIN TipoCobertura tc ON tc.id = s.tipo_cobertura
+            WHERE v.eliminado=0
+            ORDER BY v.marca, v.modelo;
+        """;
 
         List<Vehiculo> list = new ArrayList<>();
-        try (Connection con = DatabaseConnection.getConnection();
-             PreparedStatement ps = con.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-
+        try (Connection con = DatabaseConnection.getConnection(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(map(rs));
             }
             return list;
         } catch (SQLException e) {
-            throw new RuntimeException("Error listando VehÃ­culos: " + e.getMessage(), e);
+            throw new RuntimeException("Error listando Vehículos: " + e.getMessage(), e);
         }
     }
-
-    // ==========================
-    // MAPEO
-    // ==========================
 
     private Vehiculo map(ResultSet rs) throws SQLException {
         Vehiculo v = new Vehiculo();
@@ -225,32 +230,24 @@ public class VehiculoDAO {
         v.setNroChasis(rs.getString("nro_chasis"));
         v.setEliminado(rs.getBoolean("eliminado"));
 
-        Long seguroId = (Long) rs.getObject("s_id");
-        if (seguroId != null) {
-            TipoCobertura tc = null;
-            Long tcId = (Long) rs.getObject("tc_id");
-            if (tcId != null) {
-                tc = new TipoCobertura();
-                tc.setId(tcId);
-                tc.setCodigo(rs.getString("codigo"));
-                tc.setNombre(rs.getString("nombre"));
-                tc.setEliminado(rs.getBoolean("tc_eliminado"));
-                Object ordenObj = rs.getObject("orden");
-                tc.setOrden(ordenObj != null ? rs.getInt("orden") : null);
-            }
+        TipoCobertura tc = new TipoCobertura();
+        tc.setId(rs.getLong("tc_id"));
+        tc.setCodigo(rs.getString("codigo"));
+        tc.setNombre(rs.getString("nombre"));
+        tc.setEliminado(rs.getBoolean("tc_eliminado"));
+        // (no seteamos descripcion ni orden porque no existen en el modelo Java/SQL usado)
 
-            SeguroVehicular s = new SeguroVehicular();
-            s.setId(seguroId);
-            s.setAseguradora(rs.getString("aseguradora"));
-            s.setNroPoliza(rs.getString("nro_poliza"));
-            Date vto = rs.getDate("vencimiento");
-            s.setVencimiento(vto != null ? vto.toLocalDate() : null);
-            s.setEliminado(rs.getBoolean("s_eliminado"));
-            s.setTipoCobertura(tc);
+        SeguroVehicular s = new SeguroVehicular();
+        s.setId(rs.getLong("s_id"));
+        s.setAseguradora(rs.getString("aseguradora"));
+        s.setNroPoliza(rs.getString("nro_poliza"));
+        Date vto = rs.getDate("vencimiento");
+        s.setVencimiento(vto != null ? vto.toLocalDate() : null);
+        s.setEliminado(rs.getBoolean("s_eliminado"));
+        s.setTipoCobertura(tc);
 
-            v.setSeguro(s);
-        }
-
+        v.setSeguro(s);
         return v;
     }
+
 }
