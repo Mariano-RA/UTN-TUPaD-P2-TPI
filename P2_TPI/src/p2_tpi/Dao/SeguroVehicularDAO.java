@@ -5,6 +5,7 @@ import p2_tpi.Models.SeguroVehicular;
 import p2_tpi.Models.TipoCobertura;
 
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -149,6 +150,7 @@ public class SeguroVehicularDAO {
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? map(rs) : null;
             }
+            return list;
         } catch (SQLException e) {
             throw new RuntimeException("Error buscando SeguroVehicular por póliza: " + e.getMessage(), e);
         }
@@ -181,7 +183,7 @@ public class SeguroVehicularDAO {
                 return rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error verificando existencia de póliza: " + e.getMessage(), e);
+              throw new RuntimeException("Error verificando existencia de póliza: " + e.getMessage(), e);
         }
     }
 

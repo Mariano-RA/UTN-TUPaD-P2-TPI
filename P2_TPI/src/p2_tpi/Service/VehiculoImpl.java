@@ -1,4 +1,3 @@
-// p2_tpi/Service/VehiculoServiceImpl.java
 package p2_tpi.Service;
 
 import p2_tpi.Config.TransactionManager;
@@ -99,6 +98,10 @@ public class VehiculoImpl {
     public List<Vehiculo> listar() {
         return vehiculoDAO.findAll();
     }
+
+    // ==========================
+    // VALIDACIONES
+    // ==========================
 
     private void validarObligatorios(Vehiculo v) {
         if (v == null) {

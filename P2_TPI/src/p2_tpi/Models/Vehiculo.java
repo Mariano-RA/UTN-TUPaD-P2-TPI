@@ -9,7 +9,10 @@ public class Vehiculo extends Base {
     private String nroChasis;          // UNIQUE opcional
     private SeguroVehicular seguro;    // 1→1
 
-    // getters/setters
+    // ==========================
+    // GETTERS / SETTERS
+    // ==========================
+
     public String getDominio() {
         return dominio;
     }
@@ -57,4 +60,19 @@ public class Vehiculo extends Base {
     public void setSeguro(SeguroVehicular seguro) {
         this.seguro = seguro;
     }
+
+    @Override
+    public String toString() {
+        return "Vehiculo{" +
+                "id=" + getId() +
+                ", dominio='" + dominio + '\'' +
+                ", marca='" + marca + '\'' +
+                ", modelo='" + modelo + '\'' +
+                ", anio=" + anio +
+                ", nroChasis='" + nroChasis + '\'' +
+                ", eliminado=" + isEliminado() +
+                ", seguro=" + (seguro != null ? seguro.getNroPoliza() : null) +
+                '}';
+    }
 }
+
