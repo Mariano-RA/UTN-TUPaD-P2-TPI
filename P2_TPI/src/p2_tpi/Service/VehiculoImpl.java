@@ -1,11 +1,11 @@
-// prog2int/Service/VehiculoServiceImpl.java
-package prog2int.Service;
+// p2_tpi/Service/VehiculoServiceImpl.java
+package p2_tpi.Service;
 
-import prog2int.Config.TransactionManager;
-import prog2int.Dao.SeguroVehicularDAO;
-import prog2int.Dao.VehiculoDAO;
-import prog2int.Models.SeguroVehicular;
-import prog2int.Models.Vehiculo;
+import p2_tpi.Config.TransactionManager;
+import p2_tpi.Dao.SeguroVehicularDAO;
+import p2_tpi.Dao.VehiculoDAO;
+import p2_tpi.Models.SeguroVehicular;
+import p2_tpi.Models.Vehiculo;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -29,7 +29,6 @@ public class VehiculoImpl {
         if (s.getVencimiento() == null || s.getVencimiento().isBefore(LocalDate.now())) {
             throw new RuntimeException("La fecha de vencimiento no puede estar vencida.");
         }
-        // Nota: tu SQL deja nro_poliza NULL, pero lo exigimos aquí (regla de negocio)
         if (s.getNroPoliza() == null || s.getNroPoliza().trim().isEmpty()) {
             throw new RuntimeException("El número de póliza es obligatorio.");
         }

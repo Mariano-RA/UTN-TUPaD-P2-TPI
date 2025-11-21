@@ -1,4 +1,4 @@
-package prog2int.Models;
+package p2_tpi.Models;
 
 public class Vehiculo extends Base {
 

@@ -1,9 +1,9 @@
-package prog2int.Dao;
+package p2_tpi.Dao;
 
-import prog2int.Config.DatabaseConnection;
-import prog2int.Models.SeguroVehicular;
-import prog2int.Models.TipoCobertura;
-import prog2int.Models.Vehiculo;
+import p2_tpi.Config.DatabaseConnection;
+import p2_tpi.Models.SeguroVehicular;
+import p2_tpi.Models.TipoCobertura;
+import p2_tpi.Models.Vehiculo;
 
 import java.sql.*;
 import java.util.ArrayList;

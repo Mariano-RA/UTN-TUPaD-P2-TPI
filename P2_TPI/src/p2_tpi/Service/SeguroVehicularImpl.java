@@ -1,8 +1,6 @@
-// prog2int/Service/SeguroVehicularServiceImpl.java
 package p2_tpi.Service;
 
 import p2_tpi.Dao.SeguroVehicularDAO;
-import p2_tpi.Dao.TipoCoberturaDAO;
 import p2_tpi.Models.SeguroVehicular;
 import p2_tpi.Models.TipoCobertura;
 
@@ -11,69 +9,110 @@ import java.util.List;
 
 public class SeguroVehicularImpl {
 
-    private final SeguroVehicularDAO seguroDAO = new SeguroVehicularDAO();
-    private final TipoCoberturaDAO coberturaDAO = new TipoCoberturaDAO();
+    private final SeguroVehicularDAO dao = new SeguroVehicularDAO();
 
-    public Long crear(SeguroVehicular s) {
-        validarObligatorios(s); // <-- exige nroPoliza no nula/ni vacía
-        if (seguroDAO.existsByNroPoliza(s.getNroPoliza())) {
-            throw new RuntimeException("La póliza ya existe: " + s.getNroPoliza());
-        }
+    // ============================================================
+    // MÉTODOS PÚBLICOS (CRUD)
+    // ============================================================
 
-        TipoCobertura tc = coberturaDAO.findById(s.getTipoCobertura().getId());
-        if (tc == null || tc.isEliminado()) {
-            throw new RuntimeException("Tipo de cobertura inexistente o eliminado.");
-        }
-        if (s.getVencimiento().isBefore(LocalDate.now())) {
-            throw new RuntimeException("La fecha de vencimiento no puede estar vencida.");
-        }
+    public Long crear(SeguroVehicular s) throws Exception {
+        validarCrear(s);
 
-        s.setTipoCobertura(tc);
-        s.setEliminado(false);
-        return seguroDAO.insert(s);
+        // Insert normal (sin transacción)
+        Long id = dao.insert(s);
+        return id;
     }
 
-    public int actualizar(SeguroVehicular s) {
-        if (s.getId() == null) {
-            throw new RuntimeException("Falta id para actualizar.");
-        }
-        validarObligatorios(s);
-        if (seguroDAO.existsByNroPolizaExcludingId(s.getNroPoliza(), s.getId())) {
-            throw new RuntimeException("La póliza ya pertenece a otro registro.");
-        }
-
-        TipoCobertura tc = coberturaDAO.findById(s.getTipoCobertura().getId());
-        if (tc == null || tc.isEliminado()) {
-            throw new RuntimeException("Tipo de cobertura inexistente o eliminado.");
-        }
-        if (s.getVencimiento().isBefore(LocalDate.now())) {
-            throw new RuntimeException("La fecha de vencimiento no puede estar vencida.");
-        }
-
-        s.setTipoCobertura(tc);
-        return seguroDAO.update(s);
+    public int actualizar(SeguroVehicular s) throws Exception {
+        validarActualizar(s);
+        return dao.update(s);
     }
 
-    // ... obtener/buscar/listar igual que ya tenías
-    private void validarObligatorios(SeguroVehicular s) {
-        if (s == null) {
-            throw new RuntimeException("Falta el objeto seguro.");
+    public int eliminar(Long id) throws Exception {
+        if (id == null) {
+            throw new Exception("ID del seguro no puede ser nulo.");
         }
-        if (isBlank(s.getAseguradora())) {
-            throw new RuntimeException("La aseguradora es obligatoria.");
+        return dao.softDelete(id);
+    }
+
+    public SeguroVehicular buscarPorPoliza(String nroPoliza) throws Exception {
+        if (nroPoliza == null || nroPoliza.isBlank()) {
+            throw new Exception("El número de póliza no puede estar vacío.");
         }
-        if (isBlank(s.getNroPoliza())) {
-            throw new RuntimeException("El número de póliza es obligatorio."); // <-- clave
+        return dao.findByNroPoliza(nroPoliza);
+    }
+
+    public SeguroVehicular buscarPorId(Long id) throws Exception {
+        if (id == null) {
+            throw new Exception("ID del seguro no puede ser nulo.");
         }
-        if (s.getTipoCobertura() == null || s.getTipoCobertura().getId() == null) {
-            throw new RuntimeException("Debe indicar un id de tipo de cobertura.");
+        return dao.findById(id);
+    }
+
+    public List<SeguroVehicular> listar() {
+        return dao.findAllActivos();
+    }
+
+    // ============================================================
+    // VALIDACIONES
+    // ============================================================
+
+    private void validarCrear(SeguroVehicular s) throws Exception {
+        if (s == null) throw new Exception("Seguro no puede ser null.");
+
+        validarAseguradora(s.getAseguradora());
+        validarPolizaNueva(s.getNroPoliza());
+        validarCobertura(s.getTipoCobertura());
+        validarVencimiento(s.getVencimiento());
+    }
+
+    private void validarActualizar(SeguroVehicular s) throws Exception {
+        if (s == null || s.getId() == null) {
+            throw new Exception("Seguro o ID nulo.");
         }
-        if (s.getVencimiento() == null) {
-            throw new RuntimeException("Debe indicar fecha de vencimiento.");
+
+        validarAseguradora(s.getAseguradora());
+        validarPolizaExistente(s.getNroPoliza(), s.getId());
+        validarCobertura(s.getTipoCobertura());
+        validarVencimiento(s.getVencimiento());
+    }
+
+    private void validarAseguradora(String aseguradora) throws Exception {
+        if (aseguradora == null || aseguradora.isBlank()) {
+            throw new Exception("La aseguradora no puede estar vacía.");
         }
     }
 
-    private boolean isBlank(String s) {
-        return s == null || s.trim().isEmpty();
+    private void validarPolizaNueva(String poliza) throws Exception {
+        if (poliza == null || poliza.isBlank()) {
+            throw new Exception("El número de póliza no puede estar vacío.");
+        }
+        if (dao.existsByNroPoliza(poliza)) {
+            throw new Exception("Ya existe un seguro con ese número de póliza.");
+        }
+    }
+
+    private void validarPolizaExistente(String poliza, Long id) throws Exception {
+        if (poliza == null || poliza.isBlank()) {
+            throw new Exception("El número de póliza no puede estar vacío.");
+        }
+        if (dao.existsByNroPolizaExcludingId(poliza, id)) {
+            throw new Exception("Otro seguro ya tiene ese número de póliza.");
+        }
+    }
+
+    private void validarCobertura(TipoCobertura tc) throws Exception {
+        if (tc == null || tc.getId() == null) {
+            throw new Exception("Debe seleccionar un tipo de cobertura válido.");
+        }
+    }
+
+    private void validarVencimiento(LocalDate vto) throws Exception {
+        if (vto == null) {
+            throw new Exception("La fecha de vencimiento no puede ser nula.");
+        }
+        if (vto.isBefore(LocalDate.now())) {
+            throw new Exception("La fecha de vencimiento debe ser futura.");
+        }
     }
 }
